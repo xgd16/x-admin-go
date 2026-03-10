@@ -12,9 +12,22 @@ export interface LoginRes {
   message?: string
 }
 
+export interface ChangePasswordReq {
+  oldPassword: string
+  newPassword: string
+}
+
 export function login(data: LoginReq) {
   return req<Response<LoginRes>>({
     url: '/auth/login',
+    method: 'post',
+    data,
+  })
+}
+
+export function changePassword(data: ChangePasswordReq) {
+  return req<Response<{ message?: string }>>({
+    url: '/auth/change-password',
     method: 'post',
     data,
   })

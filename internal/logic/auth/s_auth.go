@@ -9,6 +9,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"x-admin/internal/dao"
+	"x-admin/internal/model/do"
 	"x-admin/internal/model/entity"
 	authService "x-admin/internal/service/auth"
 )
@@ -27,6 +29,22 @@ func New() authService.IAuth {
 const defaultPasswordHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
 
 func (s *sAuth) Login(ctx context.Context, username, password string) (*entity.UserInfo, string, int64, error) {
+	// 1. 优先检查 sys_admin（含通过修改密码迁移的配置 admin）
+	var dbUser entity.SysAdmin
+	err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Username, username).Scan(&dbUser)
+	if err == nil && dbUser.Id > 0 && dbUser.Status == 1 {
+		if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(password)); err == nil {
+			user := &entity.UserInfo{
+				Id:       dbUser.Id,
+				Username: dbUser.Username,
+				Nickname: dbUser.Nickname,
+				Avatar:   dbUser.Avatar,
+			}
+			return s.issueToken(ctx, user)
+		}
+	}
+
+	// 2. 回退到配置认证
 	cfg := g.Cfg().MustGet(ctx, "auth")
 	adminUser := cfg.Map()["admin"]
 	if adminUser == nil {
@@ -47,7 +65,6 @@ func (s *sAuth) Login(ctx context.Context, username, password string) (*entity.U
 	if username != cfgUsername {
 		return nil, "", 0, gerror.New("用户名或密码错误")
 	}
-	// 支持 passwordHash（bcrypt）或 password（明文，仅开发环境）
 	cfgPasswordHash, hasHash := adminMap["passwordHash"].(string)
 	if hasHash && cfgPasswordHash != "" {
 		if err := bcrypt.CompareHashAndPassword([]byte(cfgPasswordHash), []byte(password)); err != nil {
@@ -68,6 +85,10 @@ func (s *sAuth) Login(ctx context.Context, username, password string) (*entity.U
 		Nickname: username,
 		Avatar:   "",
 	}
+	return s.issueToken(ctx, user)
+}
+
+func (s *sAuth) issueToken(ctx context.Context, user *entity.UserInfo) (*entity.UserInfo, string, int64, error) {
 	secret := g.Cfg().MustGet(ctx, "auth.jwtSecret").String()
 	if secret == "" {
 		secret = "x-admin-jwt-secret-change-in-production"
@@ -114,4 +135,70 @@ func (s *sAuth) VerifyToken(ctx context.Context, tokenStr string) (*entity.UserI
 		Username: username,
 		Nickname: nickname,
 	}, nil
+}
+
+func (s *sAuth) ChangePassword(ctx context.Context, user *entity.UserInfo, oldPassword, newPassword string) error {
+	// 1. 检查 sys_admin 中是否存在该用户
+	var dbUser entity.SysAdmin
+	err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Username, user.Username).Scan(&dbUser)
+	if err != nil {
+		return gerror.Wrap(err, "查询用户失败")
+	}
+
+	if dbUser.Id > 0 {
+		// 已在 sys_admin：验证原密码并更新
+		if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(oldPassword)); err != nil {
+			return gerror.New("原密码错误")
+		}
+		hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+		if err != nil {
+			return gerror.Wrap(err, "密码加密失败")
+		}
+		_, err = dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Id, dbUser.Id).Data(do.SysAdmin{Password: string(hash)}).Update()
+		if err != nil {
+			return gerror.Wrap(err, "更新密码失败")
+		}
+		return nil
+	}
+
+	// 2. 配置 admin：验证原密码后迁移到 sys_admin
+	cfg := g.Cfg().MustGet(ctx, "auth")
+	adminMap, _ := cfg.Map()["admin"].(map[string]interface{})
+	if adminMap == nil {
+		return gerror.New("您的账户不支持修改密码")
+	}
+	cfgUsername, _ := adminMap["username"].(string)
+	if cfgUsername == "" {
+		cfgUsername = "admin"
+	}
+	if user.Username != cfgUsername {
+		return gerror.New("您的账户不支持修改密码")
+	}
+	cfgPassword, _ := adminMap["password"].(string)
+	cfgPasswordHash, hasHash := adminMap["passwordHash"].(string)
+	oldOk := false
+	if hasHash && cfgPasswordHash != "" {
+		oldOk = bcrypt.CompareHashAndPassword([]byte(cfgPasswordHash), []byte(oldPassword)) == nil
+	} else if cfgPassword != "" {
+		oldOk = oldPassword == cfgPassword
+	} else {
+		oldOk = bcrypt.CompareHashAndPassword([]byte(defaultPasswordHash), []byte(oldPassword)) == nil
+	}
+	if !oldOk {
+		return gerror.New("原密码错误")
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return gerror.Wrap(err, "密码加密失败")
+	}
+	_, err = dao.SysAdmin.Ctx(ctx).Data(do.SysAdmin{
+		Username: user.Username,
+		Password: string(hash),
+		Nickname: user.Nickname,
+		Status:   1,
+	}).Insert()
+	if err != nil {
+		return gerror.Wrap(err, "更新密码失败")
+	}
+	return nil
 }
