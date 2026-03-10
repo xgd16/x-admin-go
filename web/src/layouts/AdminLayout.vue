@@ -39,8 +39,8 @@ const sidebarCollapsed = ref(false)
 <style scoped>
 .admin-layout {
   background: var(--bg-layer-2);
-  gap: 16px;
-  padding: 16px;
+  gap: 8px;
+  padding: 8px;
 }
 
 .admin-aside {
@@ -56,7 +56,7 @@ html.dark .admin-aside {
 
 .admin-main-wrapper {
   background: var(--bg-layer-1);
-  gap: 16px;
+  gap: 8px;
   flex: 1;
   min-width: 0;
   border-radius: var(--radius-panel) !important;
@@ -65,7 +65,7 @@ html.dark .admin-aside {
 
 .admin-main {
   background: var(--bg-layer-1) !important;
-  padding: 20px;
+  padding: 12px;
   margin: 0;
 }
 

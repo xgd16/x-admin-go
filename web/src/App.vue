@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { useDarkMode } from '@/composables/useDarkMode'
+import { onMounted } from 'vue'
+import { useSettingsStore } from '@/store/settings'
 
-useDarkMode()
+onMounted(() => {
+  useSettingsStore().initFromStorage()
+})
 </script>
 
 <template>

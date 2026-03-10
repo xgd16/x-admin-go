@@ -53,13 +53,21 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="login-page min-h-screen flex items-center justify-center bg-layer-2">
-    <div class="login-card bg-layer-0 rounded-2xl shadow-lg p-8 w-full max-w-md">
-      <div class="text-center mb-8">
-        <h1 class="text-2xl font-semibold text-[var(--text-primary)]">x-admin</h1>
-        <p class="text-sm text-[var(--text-secondary)] mt-1">后台管理系统</p>
+  <div class="login-page">
+    <div class="login-card">
+      <div class="login-header">
+        <h1 class="login-title">x-admin</h1>
+        <p class="login-subtitle">后台管理系统</p>
       </div>
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="handleSubmit">
+
+      <el-form
+        ref="formRef"
+        class="login-form"
+        :model="form"
+        :rules="rules"
+        label-position="top"
+        @submit.prevent="handleSubmit"
+      >
         <el-form-item label="用户名" prop="username">
           <el-input
             v-model="form.username"
@@ -81,24 +89,100 @@ onMounted(() => {
             @keyup.enter="handleSubmit"
           />
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" size="large" class="w-full" :loading="loading" @click="handleSubmit">
+        <el-form-item class="login-btn-wrap">
+          <el-button type="primary" size="large" class="login-btn" :loading="loading" @click="handleSubmit">
             登 录
           </el-button>
         </el-form-item>
       </el-form>
-      <p class="text-xs text-[var(--text-tertiary)] text-center mt-4">
-        默认账号：admin / 123456
-      </p>
+
+      <p class="login-hint">默认账号：admin / 123456</p>
     </div>
   </div>
 </template>
 
 <style scoped>
 .login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-layer-2);
   padding: 24px;
 }
+
 .login-card {
-  border-radius: var(--radius-panel, 12px);
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-layer-0);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  padding: 40px;
+}
+
+html.dark .login-card {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.login-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 6px 0 0;
+}
+
+/* 修复 Element Plus 表单布局 */
+.login-form {
+  --el-form-label-font-size: 14px;
+}
+
+.login-form :deep(.el-form-item) {
+  margin-bottom: 24px;
+}
+
+.login-form :deep(.el-form-item__label) {
+  display: block;
+  width: 100% !important;
+  margin-bottom: 8px;
+  padding: 0 !important;
+  line-height: 1.5;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.login-form :deep(.el-form-item__content) {
+  display: block;
+  margin-left: 0 !important;
+  line-height: normal;
+}
+
+.login-form :deep(.el-input__wrapper) {
+  width: 100%;
+}
+
+.login-btn-wrap {
+  margin-bottom: 0;
+}
+
+.login-btn {
+  width: 100%;
+}
+
+.login-hint {
+  margin: 20px 0 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
 }
 </style>

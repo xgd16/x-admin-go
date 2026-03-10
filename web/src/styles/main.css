@@ -11,6 +11,9 @@
   --bg-layer-4: #ebebeb;
   --radius-panel: 12px;
   --radius-card: 10px;
+  --text-primary: #303133;
+  --text-secondary: #606266;
+  --text-tertiary: #909399;
 }
 
 html.dark {
@@ -19,6 +22,9 @@ html.dark {
   --bg-layer-2: #2d2d30;
   --bg-layer-3: #333333;
   --bg-layer-4: #3c3c3c;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-tertiary: #6b7280;
 }
 
 /* body 不圆角，保持直角 */
@@ -31,12 +37,85 @@ body {
 /* 除 body 外板块统一圆角：卡片、面板等 */
 .el-card {
   border-radius: var(--radius-card) !important;
+  background-color: var(--bg-layer-0) !important;
+  border: 1px solid var(--el-border-color-lighter);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .el-card__header {
   border-radius: var(--radius-card) var(--radius-card) 0 0 !important;
+  background-color: var(--bg-layer-0) !important;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .el-card__body {
   border-radius: 0 0 var(--radius-card) var(--radius-card) !important;
+  background-color: var(--bg-layer-0) !important;
+}
+
+html.dark .el-card {
+  border-color: var(--el-border-color);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.35);
+}
+
+html.dark .el-card__header {
+  border-bottom-color: var(--el-border-color);
+}
+
+/* Table 与 Input 兼容全局主题：确保边框与层级可见 */
+.el-table {
+  --el-table-bg-color: var(--bg-layer-0) !important;
+  --el-table-tr-bg-color: var(--bg-layer-0) !important;
+  --el-table-header-bg-color: var(--bg-layer-2) !important;
+  --el-table-border-color: var(--el-border-color) !important;
+  --el-table-text-color: var(--text-primary) !important;
+  --el-table-header-text-color: var(--text-primary) !important;
+}
+
+.el-table th.el-table__cell,
+.el-table td.el-table__cell {
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.el-table--border .el-table__cell,
+.el-table--border th.el-table__cell {
+  border-right: 1px solid var(--el-border-color-lighter);
+}
+
+.el-input__wrapper {
+  background-color: var(--bg-layer-0) !important;
+  box-shadow: 0 0 0 1px var(--el-border-color) inset !important;
+}
+
+.el-input__wrapper:hover {
+  box-shadow: 0 0 0 1px var(--el-border-color-hover, var(--el-color-primary)) inset !important;
+}
+
+.el-input__inner {
+  color: var(--text-primary) !important;
+}
+
+.el-input__inner::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Select 下拉 */
+.el-select .el-input__wrapper {
+  background-color: var(--bg-layer-0) !important;
+}
+
+/* 分页 */
+.el-pagination .el-pagination__total,
+.el-pagination .el-select .el-input__inner {
+  color: var(--text-primary);
+}
+
+.el-pager li {
+  background-color: var(--bg-layer-0);
+  color: var(--text-primary);
+}
+
+.el-pager li.is-active {
+  background-color: var(--el-color-primary);
+  color: var(--el-color-white);
 }

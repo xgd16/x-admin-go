@@ -3,9 +3,9 @@
 
 <template>
   <div class="dashboard-page">
-    <h2 class="page-title mb-6 text-gray-800 dark:text-gray-100">仪表盘</h2>
+    <h2 class="page-title mb-3 text-gray-800 dark:text-gray-100">仪表盘</h2>
 
-    <el-row :gutter="16">
+    <el-row :gutter="12">
       <el-col :xs="24" :sm="12" :lg="6">
         <el-card class="dashboard-card rounded-card" shadow="hover">
           <el-statistic title="今日访问" :value="1234" />
@@ -28,7 +28,7 @@
       </el-col>
     </el-row>
 
-    <el-row :gutter="16" class="mt-6">
+    <el-row :gutter="12" class="mt-4">
       <el-col :span="24">
         <el-card class="rounded-card" shadow="hover">
           <template #header>欢迎使用 x-admin</template>
@@ -48,7 +48,7 @@
 }
 
 .dashboard-card :deep(.el-card__body) {
-  padding: 20px;
+  padding: 12px;
 }
 
 .page-title {

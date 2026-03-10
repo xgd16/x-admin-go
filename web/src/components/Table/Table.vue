@@ -261,7 +261,7 @@ const ColumnsRender = defineComponent<{ columns: TableColumn[] }>({
 .table-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
 }
 .table-toolbar {
   display: flex;

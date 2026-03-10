@@ -1,20 +1,9 @@
-import { useDark, useToggle } from '@vueuse/core'
-import { watch } from 'vue'
-
-const isDark = useDark({ storageKey: 'x-admin-theme' })
-const toggleDark = useToggle(isDark)
+import { useSettingsStore } from '@/store/settings'
 
 export function useDarkMode() {
-  watch(
-    isDark,
-    (dark) => {
-      if (dark) {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.remove('dark')
-      }
-    },
-    { immediate: true }
-  )
-  return { isDark, toggleDark }
+  const settings = useSettingsStore()
+  return {
+    isDark: settings.darkMode,
+    toggleDark: () => settings.setDarkMode(!settings.darkMode),
+  }
 }

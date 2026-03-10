@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import { Odometer, Setting, User } from '@element-plus/icons-vue'
+import { Odometer, Setting, User, Brush } from '@element-plus/icons-vue'
 import AppLogo from './AppLogo.vue'
 
 defineProps<{
@@ -40,6 +40,10 @@ function handleSelect(path: string) {
         <el-menu-item index="/system/user">
           <el-icon><User /></el-icon>
           <template #title>用户管理</template>
+        </el-menu-item>
+        <el-menu-item index="/system/settings">
+          <el-icon><Brush /></el-icon>
+          <template #title>后台设置</template>
         </el-menu-item>
       </el-sub-menu>
     </el-menu>
