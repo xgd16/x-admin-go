@@ -1,0 +1,143 @@
+---
+description: x-admin GoFrame 项目开发规范与 AI Agent 编写说明
+alwaysApply: true
+---
+
+# x-admin 项目规则
+
+## 项目概览
+
+- **框架**: GoFrame v2，单模块 `x-admin`
+- **入口**: `main.go` → `cmd.Main`
+- **目录**: `api/` 定义层，`internal/` 实现层，`manifest/` 部署配置，`web/` 后台前端
+
+## 必须遵守的约定
+
+### 禁止手动修改的文件
+
+以下由 GoFrame CLI 自动维护，**勿手动创建或修改**：
+- `internal/dao/`、`internal/dao/internal/do/`、`internal/model/entity/`
+- `api/{module}/{module}.go`（接口定义）
+- `internal/controller/{module}/{module}_new.go`（控制器骨架）
+
+### 业务逻辑
+
+- 优先在 service 层封装；无 service 时可在 controller 实现简单逻辑
+- 不使用 logic 目录
+
+### 错误处理
+
+- 统一使用 `gerror`：`return nil, gerror.New("...")`
+
+## 新增 API 流程
+
+1. **定义结构体**：在 `api/{module}/v1/` 中定义 `XxxReq`、`XxxRes`，使用 `g.Meta` 标注 path/method
+2. **保存文件**：保存 `api/*.go` 后 RunOnSave 会自动执行 `gf gen ctrl`，无需手动运行
+3. **实现方法**：在 `internal/controller/{module}/{module}_v1_xxx.go` 中实现
+4. **注册路由**：在 `internal/cmd/cmd.go` 的 `group.Bind()` 中确保控制器已绑定
+
+## 命名规范
+
+- 控制器：`ControllerV1`
+- 请求/响应：`XxxReq`、`XxxRes`
+- 内部包导入：使用 `x-admin` 模块前缀
+
+## 配置与运行
+
+- 配置：`manifest/config/config.yaml`，端口默认 `:9901`
+- 启动：`go run main.go` 或 `gf run`
+- 数据库生成：`hack/config.yaml` 配置连接后执行 `gf gen dao`
+
+---
+
+## gf gen 代码生成
+
+参考：<https://goframe.org/docs/cli/gen>
+
+| 命令 | 用途 |
+|------|------|
+| **gen ctrl** | 根据 API 定义生成控制器与 SDK |
+| **gen dao** | 根据数据库表生成 dao/do/entity |
+| **gen service** | 从 logic 生成 service 接口（实验性） |
+| **gen enums** | 解析源码生成枚举定义 |
+| **gen pb** | 编译 protobuf 生成 gRPC 代码 |
+| **gen pbentity** | 根据表结构生成 protobuf 实体 |
+
+### gen ctrl
+
+- **规范**：API 路径 `api/{模块}/{版本}/{定义}.go`，结构体命名 `操作Req`/`操作Res`（如 GetListReq、CreateReq）
+- **执行**：保存 `api/*.go` 即可，RunOnSave 会自动执行 `gf gen ctrl --watchFile --merge`，通常无需手动运行
+- **参数**：`-s` api 目录、`-d` 控制器目录、`-k` SDK 路径、`-m` 合并为单文件、`-c` 清理已删除的 API 对应控制器
+
+### gen dao
+
+- **配置**：在 `hack/config.yaml` 的 `gfcli.gen.dao` 下配置 `link`、`tables`（支持通配符 `user_*`）、`jsonCase`、`descriptionTag`
+- **执行**：`gf gen dao` 或 `make dao`
+- **输出**：`internal/dao`、`internal/model/do`、`internal/model/entity`
+- **参数**：`-l` 数据库 DSN、`-t` 指定表、`-x` 排除表、`-r` 去除表前缀、`-c` 清理数据库已删除表的生成代码
+
+### gen service（实验性）
+
+- **流程**：从 `internal/logic` 中 `sXxx` 结构体推导生成 `internal/service` 接口
+- **规范**：logic 中以 `s` 开头+大写的结构体（如 sUser）会生成 User 接口
+- **执行**：保存 `internal/logic/*.go` 即可，RunOnSave 会自动执行 `gf gen service`，通常无需手动运行
+
+### 自动执行说明
+
+编辑器已配置 RunOnSave（emeraldwalk.runonsave），保存时自动触发：
+- `api/*.go` → `gf gen ctrl --watchFile --merge`
+- `internal/logic/*.go` → `gf gen service`
+- `*.go` → `go fmt`
+
+多数情况下只需保存文件即可，不必单独执行上述命令。
+
+---
+
+## web/ 后台网页项目
+
+`web/` 为后台管理前端目录，技术栈：**Vue 3 + TypeScript + Vite + Tailwind CSS + Element Plus**。
+
+### UI 与样式规范
+
+- **主组件库**：Element Plus（需支持深色模式切换，使用其内置 theme 能力）
+- **主色调**：以白色为主，通过不同深浅度的白色/灰色阶梯区分层级
+- **圆角**：除 body 外的各板块（如卡片、侧边栏、内容区）以圆角为主
+
+### Table 组件（`web/src/components/Table`）
+
+基于 Element Plus 封装的表格，内置分页、请求、搜索联动。优先使用 `columns` 配置或 `columns` 插槽。
+
+**基础用法：**
+```vue
+<Table ref="tableRef" :url="/api/xxx/list" :search="[form]" :columns="columns" v-model:currentPage="page" v-model:pageSize="size" />
+```
+
+**关键 Props：** `url`(必填)、`method`(默认 post)、`search`(搜索对象数组，浅合并)、`columns`(列配置)、`pageNumKey`/`pageSizeKey`(默认 pageNum/pageSize)、`listKey`/`totalKey`(默认 list/total)、`immediate`(默认 true)、`pagination`(默认 true)、`beforeRequest`、`afterResponse`
+
+**插槽：** `toolbar`(工具栏)、`columns`(不传 columns 时自定义列)、`empty`(空状态)；列配置中 `slot`/`headerSlot` 可指向命名插槽做单元格/表头自定义。
+
+**Ref 方法：** `refresh()`(回第一页刷新)、`refreshKeepPage()`(保持当前页刷新)、`getSelection()`、`clearSelection()`、`toggleRowSelection(row, selected)`。
+
+**列配置示例：** `{ type:'selection'|'index', label, prop, width, minWidth, fixed, align, sortable, slot, headerSlot, children }`
+
+---
+
+## MCP 工具使用提示
+
+开发时可优先使用以下 MCP 工具，调用前请先查阅工具 schema 确认参数。
+
+| 工具 | 用途 |
+|------|------|
+| **RunSafeShellCommand** | 安全执行终端命令（黑名单、超时、有限管道支持） |
+| **Md5Encode** | 计算文本 MD5（hex 小写） |
+| **Base64Encode** / **Base64Decode** | Base64 编解码 |
+| **JwtParse** | 解析 JWT（不校验签名），返回 header 与 payload |
+| **JsonEncode** | 校验并压缩 JSON 字符串 |
+| **SQL_Actuator** | 根据需求生成 SQL 并执行，返回结果 |
+| **NowTime** | 获取当前时间（时间戳、指定时区日期时间） |
+| **TimestampToDateTime** | 时间戳转日期时间 |
+| **GetCalendarDays** | 获取指定年月的全部日期 |
+| **GetDatabaseInfo** | 获取数据库类型、名称、连接信息 |
+| **ExecRedisCommand** | 执行 Redis 命令并返回结果 |
+
+**注意**：调用 MCP 工具前请先查阅对应工具的 schema/descriptor，确认必填参数与调用方式。

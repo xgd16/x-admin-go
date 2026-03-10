@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 项目主样式：白色阶梯 + 圆角 */
+:root {
+  --bg-layer-0: #ffffff;
+  --bg-layer-1: #fafafa;
+  --bg-layer-2: #f5f5f5;
+  --bg-layer-3: #f0f0f0;
+  --bg-layer-4: #ebebeb;
+  --radius-panel: 12px;
+  --radius-card: 10px;
+}
+
+html.dark {
+  --bg-layer-0: #1d1e1f;
+  --bg-layer-1: #252526;
+  --bg-layer-2: #2d2d30;
+  --bg-layer-3: #333333;
+  --bg-layer-4: #3c3c3c;
+}
+
+/* body 不圆角，保持直角 */
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+}
+
+/* 除 body 外板块统一圆角：卡片、面板等 */
+.el-card {
+  border-radius: var(--radius-card) !important;
+}
+
+.el-card__header {
+  border-radius: var(--radius-card) var(--radius-card) 0 0 !important;
+}
+
+.el-card__body {
+  border-radius: 0 0 var(--radius-card) var(--radius-card) !important;
+}
