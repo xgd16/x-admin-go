@@ -9,6 +9,7 @@ import zhCn from 'element-plus/es/locale/lang/zh-cn.mjs'
 import App from './App.vue'
 import router from './router'
 import '@/styles/main.css'
+import 'remixicon/fonts/remixicon.css'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)

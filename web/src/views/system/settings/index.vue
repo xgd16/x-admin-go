@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useSettingsStore } from '@/store/settings'
-import { COLOR_PRESETS, GLOBAL_COLOR_PRESETS } from '@/store/settings'
+import { useSettingsStore } from "@/store/settings";
+import { COLOR_PRESETS, GLOBAL_COLOR_PRESETS } from "@/store/settings";
 
-const settings = useSettingsStore()
+const settings = useSettingsStore();
 </script>
 
 <template>
@@ -16,7 +16,11 @@ const settings = useSettingsStore()
 
       <div class="space-y-6">
         <div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">主题模式</div>
+          <div
+            class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
+          >
+            主题模式
+          </div>
           <div class="flex items-center gap-2">
             <el-switch
               :model-value="settings.darkMode"
@@ -29,7 +33,11 @@ const settings = useSettingsStore()
         </div>
 
         <div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">主色预设</div>
+          <div
+            class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
+          >
+            主色预设
+          </div>
           <div class="flex flex-wrap gap-3">
             <div
               v-for="preset in COLOR_PRESETS"
@@ -38,15 +46,24 @@ const settings = useSettingsStore()
               :class="{ active: settings.colorPresetId === preset.id }"
               @click="settings.setColorPreset(preset.id)"
             >
-              <div class="preset-color" :style="{ background: preset.primary }" />
+              <div
+                class="preset-color"
+                :style="{ background: preset.primary }"
+              />
               <span class="preset-name">{{ preset.name }}</span>
             </div>
           </div>
         </div>
 
         <div>
-          <div class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">全局色预设</div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">含白天与深夜两套配色</p>
+          <div
+            class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
+          >
+            全局色预设
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            含白天与深夜两套配色
+          </p>
           <div class="flex flex-wrap gap-3">
             <div
               v-for="preset in GLOBAL_COLOR_PRESETS"
@@ -56,8 +73,24 @@ const settings = useSettingsStore()
               @click="settings.setGlobalColorPreset(preset.id)"
             >
               <div class="global-preset-preview">
-                <div class="preview-light" :style="{ background: preset.light.bgLayer0, color: preset.light.textPrimary }">亮</div>
-                <div class="preview-dark" :style="{ background: preset.dark.bgLayer0, color: preset.dark.textPrimary }">暗</div>
+                <div
+                  class="preview-light"
+                  :style="{
+                    background: preset.light.bgLayer0,
+                    color: preset.light.textPrimary,
+                  }"
+                >
+                  亮
+                </div>
+                <div
+                  class="preview-dark"
+                  :style="{
+                    background: preset.dark.bgLayer0,
+                    color: preset.dark.textPrimary,
+                  }"
+                >
+                  暗
+                </div>
               </div>
               <span class="preset-name">{{ preset.name }}</span>
             </div>
