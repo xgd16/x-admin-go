@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Fold, Expand, Moon, Sunny, User } from '@element-plus/icons-vue'
 import IconButton from './IconButton.vue'
+import AppBreadcrumb from './AppBreadcrumb.vue'
 import { useAuthStore } from '@/store/auth'
 import { changePassword } from '@/api/auth'
 
@@ -83,14 +84,14 @@ function handleLogout() {
 
 <template>
   <el-header class="admin-header flex items-center justify-between">
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-3 min-w-0 flex-1">
       <IconButton
         :content="collapsed ? '展开侧边栏' : '收起侧边栏'"
         @click="$emit('toggleSidebar')"
       >
         <el-icon class="text-lg"><Fold v-if="!collapsed" /><Expand v-else /></el-icon>
       </IconButton>
-      <span class="text-sm text-gray-500 dark:text-gray-400">管理后台</span>
+      <AppBreadcrumb />
     </div>
 
     <div class="flex items-center gap-4">

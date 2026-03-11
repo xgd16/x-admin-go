@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useDarkMode } from '@/composables/useDarkMode'
+import { storeToRefs } from 'pinia'
+import { useSettingsStore } from '@/store/settings'
 import AppHeader from '@/components/AppHeader.vue'
 import AppSidebar from '@/components/AppSidebar.vue'
 
-const { isDark, toggleDark } = useDarkMode()
+const settings = useSettingsStore()
+const { darkMode } = storeToRefs(settings)
 const sidebarCollapsed = ref(false)
 </script>
 
@@ -20,14 +22,14 @@ const sidebarCollapsed = ref(false)
     <el-container direction="vertical" class="admin-main-wrapper overflow-hidden">
       <AppHeader
         :collapsed="sidebarCollapsed"
-        :dark-mode="isDark"
+        :dark-mode="darkMode"
         @toggle-sidebar="sidebarCollapsed = !sidebarCollapsed"
-        @toggle-dark="toggleDark()"
+        @toggle-dark="settings.setDarkMode(!darkMode)"
       />
 
       <el-main class="admin-main bg-layer-1">
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
+          <transition name="page-slide" mode="out-in">
             <component :is="Component" />
           </transition>
         </router-view>
@@ -69,12 +71,16 @@ html.dark .admin-aside {
   margin: 0;
 }
 
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s ease;
+.page-slide-enter-active,
+.page-slide-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
-.fade-enter-from,
-.fade-leave-to {
+.page-slide-enter-from {
   opacity: 0;
+  transform: translateX(12px);
+}
+.page-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-8px);
 }
 </style>

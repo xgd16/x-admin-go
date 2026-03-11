@@ -19,7 +19,15 @@ defineEmits<{
 
 <template>
   <el-tooltip :content="content" :placement="placement">
-    <el-button :type="type" :size="size" :circle="circle" text @click="$emit('click')">
+    <el-button
+      v-motion
+      :type="type"
+      :size="size"
+      :circle="circle"
+      text
+      :tapped="{ scale: 0.92, transition: { duration: 0.15 } }"
+      @click="$emit('click')"
+    >
       <slot />
     </el-button>
   </el-tooltip>

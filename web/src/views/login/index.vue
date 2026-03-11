@@ -54,8 +54,27 @@ onMounted(() => {
 
 <template>
   <div class="login-page">
-    <div class="login-card">
-      <div class="login-header">
+    <div
+      v-motion
+      class="login-card"
+      :initial="{ opacity: 0, y: 32, scale: 0.95 }"
+      :enter="{
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        transition: { type: 'spring', stiffness: 90, damping: 18, mass: 0.8 },
+      }"
+    >
+      <div
+        v-motion
+        class="login-header"
+        :initial="{ opacity: 0, y: -8 }"
+        :enter="{
+          opacity: 1,
+          y: 0,
+          transition: { delay: 100, duration: 0.4, ease: 'easeOut' },
+        }"
+      >
         <h1 class="login-title">x-admin</h1>
         <p class="login-subtitle">后台管理系统</p>
       </div>
@@ -68,7 +87,13 @@ onMounted(() => {
         label-position="top"
         @submit.prevent="handleSubmit"
       >
-        <el-form-item label="用户名" prop="username">
+        <el-form-item
+          v-motion
+          label="用户名"
+          prop="username"
+          :initial="{ opacity: 0, x: -12 }"
+          :enter="{ opacity: 1, x: 0, transition: { delay: 180, duration: 0.35, ease: 'easeOut' } }"
+        >
           <el-input
             v-model="form.username"
             placeholder="请输入用户名"
@@ -77,7 +102,13 @@ onMounted(() => {
             :disabled="loading"
           />
         </el-form-item>
-        <el-form-item label="密码" prop="password">
+        <el-form-item
+          v-motion
+          label="密码"
+          prop="password"
+          :initial="{ opacity: 0, x: -12 }"
+          :enter="{ opacity: 1, x: 0, transition: { delay: 240, duration: 0.35, ease: 'easeOut' } }"
+        >
           <el-input
             v-model="form.password"
             type="password"
@@ -89,14 +120,26 @@ onMounted(() => {
             @keyup.enter="handleSubmit"
           />
         </el-form-item>
-        <el-form-item class="login-btn-wrap">
-          <el-button type="primary" size="large" class="login-btn" :loading="loading" @click="handleSubmit">
+        <el-form-item
+          v-motion
+          class="login-btn-wrap"
+          :initial="{ opacity: 0, y: 16 }"
+          :enter="{ opacity: 1, y: 0, transition: { delay: 300, duration: 0.4, ease: 'easeOut' } }"
+        >
+          <el-button
+            v-motion
+            type="primary"
+            size="large"
+            class="login-btn"
+            :loading="loading"
+            :hovered="{ scale: 1.02, y: -1, transition: { duration: 0.2 } }"
+            :tapped="{ scale: 0.98, transition: { duration: 0.1 } }"
+            @click="handleSubmit"
+          >
             登 录
           </el-button>
         </el-form-item>
       </el-form>
-
-      <p class="login-hint">默认账号：admin / 123456</p>
     </div>
   </div>
 </template>

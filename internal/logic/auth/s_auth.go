@@ -25,65 +25,20 @@ func New() authService.IAuth {
 	return &sAuth{}
 }
 
-// 预生成的 "123456" 的 bcrypt 哈希 (cost=10)
-const defaultPasswordHash = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"
-
 func (s *sAuth) Login(ctx context.Context, username, password string) (*entity.UserInfo, string, int64, error) {
-	// 1. 优先检查 sys_admin（含通过修改密码迁移的配置 admin）
 	var dbUser entity.SysAdmin
 	err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Username, username).Scan(&dbUser)
-	if err == nil && dbUser.Id > 0 && dbUser.Status == 1 {
-		if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(password)); err == nil {
-			user := &entity.UserInfo{
-				Id:       dbUser.Id,
-				Username: dbUser.Username,
-				Nickname: dbUser.Nickname,
-				Avatar:   dbUser.Avatar,
-			}
-			return s.issueToken(ctx, user)
-		}
-	}
-
-	// 2. 回退到配置认证
-	cfg := g.Cfg().MustGet(ctx, "auth")
-	adminUser := cfg.Map()["admin"]
-	if adminUser == nil {
-		return nil, "", 0, gerror.New("auth.admin 未配置")
-	}
-	adminMap, ok := adminUser.(map[string]interface{})
-	if !ok || len(adminMap) == 0 {
-		return nil, "", 0, gerror.New("auth.admin 配置格式错误")
-	}
-	cfgUsername, _ := adminMap["username"].(string)
-	if cfgUsername == "" {
-		cfgUsername = "admin"
-	}
-	cfgPassword := ""
-	if v, ok := adminMap["password"].(string); ok {
-		cfgPassword = v
-	}
-	if username != cfgUsername {
+	if err != nil || dbUser.Id == 0 || dbUser.Status != 1 {
 		return nil, "", 0, gerror.New("用户名或密码错误")
 	}
-	cfgPasswordHash, hasHash := adminMap["passwordHash"].(string)
-	if hasHash && cfgPasswordHash != "" {
-		if err := bcrypt.CompareHashAndPassword([]byte(cfgPasswordHash), []byte(password)); err != nil {
-			return nil, "", 0, gerror.New("用户名或密码错误")
-		}
-	} else if cfgPassword != "" {
-		if password != cfgPassword {
-			return nil, "", 0, gerror.New("用户名或密码错误")
-		}
-	} else {
-		if err := bcrypt.CompareHashAndPassword([]byte(defaultPasswordHash), []byte(password)); err != nil {
-			return nil, "", 0, gerror.New("用户名或密码错误")
-		}
+	if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(password)); err != nil {
+		return nil, "", 0, gerror.New("用户名或密码错误")
 	}
 	user := &entity.UserInfo{
-		Id:       1,
-		Username: username,
-		Nickname: username,
-		Avatar:   "",
+		Id:       dbUser.Id,
+		Username: dbUser.Username,
+		Nickname: dbUser.Nickname,
+		Avatar:   dbUser.Avatar,
 	}
 	return s.issueToken(ctx, user)
 }
@@ -138,65 +93,22 @@ func (s *sAuth) VerifyToken(ctx context.Context, tokenStr string) (*entity.UserI
 }
 
 func (s *sAuth) ChangePassword(ctx context.Context, user *entity.UserInfo, oldPassword, newPassword string) error {
-	// 1. 检查 sys_admin 中是否存在该用户
 	var dbUser entity.SysAdmin
 	err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Username, user.Username).Scan(&dbUser)
 	if err != nil {
 		return gerror.Wrap(err, "查询用户失败")
 	}
-
-	if dbUser.Id > 0 {
-		// 已在 sys_admin：验证原密码并更新
-		if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(oldPassword)); err != nil {
-			return gerror.New("原密码错误")
-		}
-		hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
-		if err != nil {
-			return gerror.Wrap(err, "密码加密失败")
-		}
-		_, err = dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Id, dbUser.Id).Data(do.SysAdmin{Password: string(hash)}).Update()
-		if err != nil {
-			return gerror.Wrap(err, "更新密码失败")
-		}
-		return nil
+	if dbUser.Id == 0 {
+		return gerror.New("用户不存在")
 	}
-
-	// 2. 配置 admin：验证原密码后迁移到 sys_admin
-	cfg := g.Cfg().MustGet(ctx, "auth")
-	adminMap, _ := cfg.Map()["admin"].(map[string]interface{})
-	if adminMap == nil {
-		return gerror.New("您的账户不支持修改密码")
-	}
-	cfgUsername, _ := adminMap["username"].(string)
-	if cfgUsername == "" {
-		cfgUsername = "admin"
-	}
-	if user.Username != cfgUsername {
-		return gerror.New("您的账户不支持修改密码")
-	}
-	cfgPassword, _ := adminMap["password"].(string)
-	cfgPasswordHash, hasHash := adminMap["passwordHash"].(string)
-	oldOk := false
-	if hasHash && cfgPasswordHash != "" {
-		oldOk = bcrypt.CompareHashAndPassword([]byte(cfgPasswordHash), []byte(oldPassword)) == nil
-	} else if cfgPassword != "" {
-		oldOk = oldPassword == cfgPassword
-	} else {
-		oldOk = bcrypt.CompareHashAndPassword([]byte(defaultPasswordHash), []byte(oldPassword)) == nil
-	}
-	if !oldOk {
+	if err := bcrypt.CompareHashAndPassword([]byte(dbUser.Password), []byte(oldPassword)); err != nil {
 		return gerror.New("原密码错误")
 	}
 	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return gerror.Wrap(err, "密码加密失败")
 	}
-	_, err = dao.SysAdmin.Ctx(ctx).Data(do.SysAdmin{
-		Username: user.Username,
-		Password: string(hash),
-		Nickname: user.Nickname,
-		Status:   1,
-	}).Insert()
+	_, err = dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Id, dbUser.Id).Data(do.SysAdmin{Password: string(hash)}).Update()
 	if err != nil {
 		return gerror.Wrap(err, "更新密码失败")
 	}
