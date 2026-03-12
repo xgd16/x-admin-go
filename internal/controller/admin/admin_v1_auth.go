@@ -7,7 +7,6 @@ import (
 
 	v1 "x-admin/api/admin/v1"
 	"x-admin/internal/code"
-	"x-admin/internal/middleware"
 	"x-admin/internal/service"
 )
 
@@ -24,7 +23,7 @@ func (c *ControllerV1) LoginAuth(ctx context.Context, req *v1.LoginAuthReq) (res
 }
 
 func (c *ControllerV1) GetAuthInfo(ctx context.Context, req *v1.GetAuthInfoReq) (res *v1.GetAuthInfoRes, err error) {
-	user := middleware.GetUser(ghttp.RequestFromCtx(ctx))
+	user := service.Middleware().GetUser(ghttp.RequestFromCtx(ctx))
 	if user == nil {
 		return nil, code.ToError(code.NotLoggedIn)
 	}
@@ -37,7 +36,7 @@ func (c *ControllerV1) GetAuthInfo(ctx context.Context, req *v1.GetAuthInfoReq) 
 }
 
 func (c *ControllerV1) ChangePasswordAuth(ctx context.Context, req *v1.ChangePasswordAuthReq) (res *v1.ChangePasswordAuthRes, err error) {
-	user := middleware.GetUser(ghttp.RequestFromCtx(ctx))
+	user := service.Middleware().GetUser(ghttp.RequestFromCtx(ctx))
 	if user == nil {
 		return nil, code.ToError(code.NotLoggedIn)
 	}

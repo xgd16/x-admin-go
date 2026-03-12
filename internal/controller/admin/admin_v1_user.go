@@ -3,7 +3,7 @@ package admin
 import (
 	"context"
 
-	"x-admin/api/admin/v1"
+	v1 "x-admin/api/admin/v1"
 	"x-admin/internal/service"
 )
 

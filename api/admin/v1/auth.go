@@ -6,7 +6,7 @@ import (
 
 // LoginAuth
 type LoginAuthReq struct {
-	g.Meta   `path:"/auth/login" tags:"Auth" method:"post" summary:"后台登录"`
+	g.Meta   `path:"/auth/login" tags:"Auth" method:"post" summary:"后台登录" noAuth:"true"`
 	Username string `json:"username" v:"required#请输入用户名"`
 	Password string `json:"password" v:"required#请输入密码"`
 }
