@@ -6,7 +6,7 @@ import (
 
 	"x-admin/internal/consts"
 	"x-admin/internal/model/entity"
-	"x-admin/internal/service/auth"
+	"x-admin/internal/service"
 )
 
 // AuthJwt JWT 校验中间件，将用户信息写入 Context
@@ -25,7 +25,7 @@ func AuthJwt(r *ghttp.Request) {
 		})
 		return
 	}
-	user, err := auth.Auth().VerifyToken(r.GetCtx(), token)
+	user, err := service.Auth().VerifyToken(r.GetCtx(), token)
 	if err != nil {
 		r.Response.WriteJsonExit(ghttp.DefaultHandlerResponse{
 			Code:    401,

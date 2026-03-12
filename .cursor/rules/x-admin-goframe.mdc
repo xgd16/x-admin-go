@@ -1,5 +1,5 @@
 ---
-description: x-admin GoFrame 项目开发规范与 AI Agent 编写说明
+description: 
 alwaysApply: true
 ---
 
@@ -10,6 +10,12 @@ alwaysApply: true
 - **框架**: GoFrame v2，单模块 `x-admin`
 - **入口**: `main.go` → `cmd.Main`
 - **目录**: `api/` 定义层，`internal/` 实现层，`manifest/` 部署配置，`web/` 后台前端
+
+### admin 模块结构
+
+- **API 定义**：`api/admin/v1/auth.go`（登录、获取信息、修改密码）、`api/admin/v1/user.go`（用户 CRUD）
+- **控制器**：`internal/controller/admin/admin_v1_auth.go`、`admin_v1_user.go`（按业务聚合，调用 service）
+- **业务逻辑**：`internal/logic/auth/`、`internal/logic/user/` 实现并注册到 `internal/service`
 
 ## 必须遵守的约定
 
@@ -33,13 +39,15 @@ alwaysApply: true
 
 1. **定义结构体**：在 `api/{module}/v1/` 中定义 `XxxReq`、`XxxRes`，使用 `g.Meta` 标注 path/method
 2. **保存文件**：保存 `api/*.go` 后 RunOnSave 会自动执行 `gf gen ctrl`，无需手动运行
-3. **实现方法**：在 `internal/controller/{module}/{module}_v1_xxx.go` 中实现
+3. **实现方法**：在 `internal/controller/{module}/{module}_v1_{业务}.go` 中实现（按业务聚合，如 `admin_v1_auth.go`、`admin_v1_user.go`）
 4. **注册路由**：在 `internal/cmd/cmd.go` 的 `group.Bind()` 中确保控制器已绑定
 
 ## 命名规范
 
 - 控制器：`ControllerV1`
-- 请求/响应：`XxxReq`、`XxxRes`
+- 请求/响应：`{操作}{实体}Req`、`{操作}{实体}Res`（如 `GetUserReq`/`GetUserRes`、`LoginAuthReq`/`LoginAuthRes`）
+- 控制器文件：按业务聚合，`admin_v1_auth.go`（auth 相关）、`admin_v1_user.go`（user 相关）
+- API 定义文件：`api/admin/v1/auth.go`、`api/admin/v1/user.go`
 - 内部包导入：使用 `x-admin` 模块前缀
 
 ## 配置与运行
@@ -55,7 +63,7 @@ alwaysApply: true
 参考：<https://goframe.org/docs/cli/gen>
 
 | 命令 | 用途 |
-|------|------|
+|---|---|
 | **gen ctrl** | 根据 API 定义生成控制器与 SDK |
 | **gen dao** | 根据数据库表生成 dao/do/entity |
 | **gen service** | 从 logic 生成 service 接口（实验性） |
@@ -65,7 +73,8 @@ alwaysApply: true
 
 ### gen ctrl
 
-- **规范**：API 路径 `api/{模块}/{版本}/{定义}.go`，结构体命名 `操作Req`/`操作Res`（如 GetListReq、CreateReq）
+- **规范**：API 路径 `api/{模块}/{版本}/{业务}.go`，结构体命名 `{操作}{实体}Req`/`{操作}{实体}Res`（如 GetUserReq、LoginAuthReq、CreateUserReq）
+- **文件组织**：API 定义按业务聚合在 `auth.go`、`user.go`；控制器按业务聚合在 `admin_v1_auth.go`、`admin_v1_user.go`
 - **执行**：保存 `api/*.go` 即可，RunOnSave 会自动执行 `gf gen ctrl --watchFile --merge`，通常无需手动运行
 - **参数**：`-s` api 目录、`-d` 控制器目录、`-k` SDK 路径、`-m` 合并为单文件、`-c` 清理已删除的 API 对应控制器
 
@@ -127,7 +136,7 @@ alwaysApply: true
 开发时可优先使用以下 MCP 工具，调用前请先查阅工具 schema 确认参数。
 
 | 工具 | 用途 |
-|------|------|
+|---|---|
 | **RunSafeShellCommand** | 安全执行终端命令（黑名单、超时、有限管道支持） |
 | **Md5Encode** | 计算文本 MD5（hex 小写） |
 | **Base64Encode** / **Base64Decode** | Base64 编解码 |

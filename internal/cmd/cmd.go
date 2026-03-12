@@ -8,8 +8,7 @@ import (
 	"github.com/gogf/gf/v2/net/ghttp"
 	"github.com/gogf/gf/v2/os/gcmd"
 
-	"x-admin/internal/controller/auth"
-	"x-admin/internal/controller/user"
+	"x-admin/internal/controller/admin"
 	"x-admin/internal/middleware"
 )
 
@@ -30,10 +29,7 @@ var (
 			})
 			s.Group("/", func(group *ghttp.RouterGroup) {
 				group.Middleware(ghttp.MiddlewareHandlerResponse)
-				group.Bind(
-					auth.NewV1(),
-					user.NewV1(),
-				)
+				group.Bind(admin.NewV1())
 			})
 			s.Run()
 			return nil

@@ -6,24 +6,24 @@ import (
 	"github.com/gogf/gf/v2/errors/gerror"
 	"golang.org/x/crypto/bcrypt"
 
-	"x-admin/api/user/v1"
+	v1 "x-admin/api/admin/v1"
 	"x-admin/internal/dao"
 	"x-admin/internal/model/do"
 	"x-admin/internal/model/entity"
-	userService "x-admin/internal/service/user"
+	"x-admin/internal/service"
 )
 
 type sUser struct{}
 
 func init() {
-	userService.RegisterUser(New())
+	service.RegisterUser(New())
 }
 
-func New() userService.IUser {
+func New() service.IUser {
 	return &sUser{}
 }
 
-func (s *sUser) GetList(ctx context.Context, req *v1.GetListReq) (*v1.GetListRes, error) {
+func (s *sUser) GetUserList(ctx context.Context, req *v1.GetUserListReq) (*v1.GetUserListRes, error) {
 	m := dao.SysAdmin.Ctx(ctx)
 	if req.Username != "" {
 		m = m.WhereLike(dao.SysAdmin.Columns().Username, "%"+req.Username+"%")
@@ -65,10 +65,10 @@ func (s *sUser) GetList(ctx context.Context, req *v1.GetListReq) (*v1.GetListRes
 			CreateTime: createTime,
 		})
 	}
-	return &v1.GetListRes{List: items, Total: int64(total)}, nil
+	return &v1.GetUserListRes{List: items, Total: int64(total)}, nil
 }
 
-func (s *sUser) Get(ctx context.Context, req *v1.GetReq) (*v1.GetRes, error) {
+func (s *sUser) GetUser(ctx context.Context, req *v1.GetUserReq) (*v1.GetUserRes, error) {
 	var e entity.SysAdmin
 	err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Id, req.Id).Scan(&e)
 	if err != nil {
@@ -77,7 +77,7 @@ func (s *sUser) Get(ctx context.Context, req *v1.GetReq) (*v1.GetRes, error) {
 	if e.Id == 0 {
 		return nil, gerror.New("用户不存在")
 	}
-	return &v1.GetRes{
+	return &v1.GetUserRes{
 		Id:       e.Id,
 		Username: e.Username,
 		Nickname: e.Nickname,
@@ -86,7 +86,7 @@ func (s *sUser) Get(ctx context.Context, req *v1.GetReq) (*v1.GetRes, error) {
 	}, nil
 }
 
-func (s *sUser) Create(ctx context.Context, req *v1.CreateReq) (*v1.CreateRes, error) {
+func (s *sUser) CreateUser(ctx context.Context, req *v1.CreateUserReq) (*v1.CreateUserRes, error) {
 	n, err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Username, req.Username).Count()
 	if err != nil {
 		return nil, gerror.Wrap(err, "检查用户名失败")
@@ -112,10 +112,10 @@ func (s *sUser) Create(ctx context.Context, req *v1.CreateReq) (*v1.CreateRes, e
 	if err != nil {
 		return nil, gerror.Wrap(err, "创建用户失败")
 	}
-	return &v1.CreateRes{Id: uint64(id)}, nil
+	return &v1.CreateUserRes{Id: uint64(id)}, nil
 }
 
-func (s *sUser) Update(ctx context.Context, req *v1.UpdateReq) (*v1.UpdateRes, error) {
+func (s *sUser) UpdateUser(ctx context.Context, req *v1.UpdateUserReq) (*v1.UpdateUserRes, error) {
 	data := make(map[string]interface{})
 	if req.Username != "" {
 		n, _ := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Username, req.Username).WhereNot(dao.SysAdmin.Columns().Id, req.Id).Count()
@@ -141,19 +141,19 @@ func (s *sUser) Update(ctx context.Context, req *v1.UpdateReq) (*v1.UpdateRes, e
 		data[dao.SysAdmin.Columns().Status] = *req.Status
 	}
 	if len(data) == 0 {
-		return &v1.UpdateRes{}, nil
+		return &v1.UpdateUserRes{}, nil
 	}
 	_, err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Id, req.Id).Data(data).Update()
 	if err != nil {
 		return nil, gerror.Wrap(err, "更新用户失败")
 	}
-	return &v1.UpdateRes{}, nil
+	return &v1.UpdateUserRes{}, nil
 }
 
-func (s *sUser) Delete(ctx context.Context, req *v1.DeleteReq) (*v1.DeleteRes, error) {
+func (s *sUser) DeleteUser(ctx context.Context, req *v1.DeleteUserReq) (*v1.DeleteUserRes, error) {
 	_, err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Id, req.Id).Delete()
 	if err != nil {
 		return nil, gerror.Wrap(err, "删除用户失败")
 	}
-	return &v1.DeleteRes{}, nil
+	return &v1.DeleteUserRes{}, nil
 }

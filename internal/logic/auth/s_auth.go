@@ -12,16 +12,16 @@ import (
 	"x-admin/internal/dao"
 	"x-admin/internal/model/do"
 	"x-admin/internal/model/entity"
-	authService "x-admin/internal/service/auth"
+	"x-admin/internal/service"
 )
 
 type sAuth struct{}
 
 func init() {
-	authService.RegisterAuth(New())
+	service.RegisterAuth(New())
 }
 
-func New() authService.IAuth {
+func New() service.IAuth {
 	return &sAuth{}
 }
 
