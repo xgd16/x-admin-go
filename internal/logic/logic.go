@@ -6,5 +6,6 @@ package logic
 
 import (
 	_ "x-admin/internal/logic/auth"
+	_ "x-admin/internal/logic/jwt"
 	_ "x-admin/internal/logic/user"
 )

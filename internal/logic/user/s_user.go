@@ -3,10 +3,10 @@ package user
 import (
 	"context"
 
-	"github.com/gogf/gf/v2/errors/gerror"
 	"golang.org/x/crypto/bcrypt"
 
 	v1 "x-admin/api/admin/v1"
+	"x-admin/internal/code"
 	"x-admin/internal/dao"
 	"x-admin/internal/model/do"
 	"x-admin/internal/model/entity"
@@ -36,7 +36,7 @@ func (s *sUser) GetUserList(ctx context.Context, req *v1.GetUserListReq) (*v1.Ge
 	}
 	total, err := m.Clone().Count()
 	if err != nil {
-		return nil, gerror.Wrap(err, "统计用户数失败")
+		return nil, code.ToErrorWrap(err, code.FailedToQueryUserDataProcedure, "统计用户数失败")
 	}
 	pageNum, pageSize := req.PageNum, req.PageSize
 	if pageNum < 1 {
@@ -48,7 +48,7 @@ func (s *sUser) GetUserList(ctx context.Context, req *v1.GetUserListReq) (*v1.Ge
 	var list []*entity.SysAdmin
 	err = m.Page(pageNum, pageSize).OrderDesc(dao.SysAdmin.Columns().Id).Scan(&list)
 	if err != nil {
-		return nil, gerror.Wrap(err, "查询用户列表失败")
+		return nil, code.ToErrorWrap(err, code.FailedToQueryUserDataProcedure, "查询用户列表失败")
 	}
 	items := make([]v1.UserItem, 0, len(list))
 	for _, e := range list {
@@ -72,10 +72,10 @@ func (s *sUser) GetUser(ctx context.Context, req *v1.GetUserReq) (*v1.GetUserRes
 	var e entity.SysAdmin
 	err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Id, req.Id).Scan(&e)
 	if err != nil {
-		return nil, gerror.Wrap(err, "查询用户失败")
+		return nil, code.ToErrorWrap(err, code.FailedToQueryUserDataProcedure, "查询用户失败")
 	}
 	if e.Id == 0 {
-		return nil, gerror.New("用户不存在")
+		return nil, code.ToError(code.UserNotFound)
 	}
 	return &v1.GetUserRes{
 		Id:       e.Id,
@@ -89,14 +89,14 @@ func (s *sUser) GetUser(ctx context.Context, req *v1.GetUserReq) (*v1.GetUserRes
 func (s *sUser) CreateUser(ctx context.Context, req *v1.CreateUserReq) (*v1.CreateUserRes, error) {
 	n, err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Username, req.Username).Count()
 	if err != nil {
-		return nil, gerror.Wrap(err, "检查用户名失败")
+		return nil, code.ToErrorWrap(err, code.FailedToQueryUserDataProcedure, "检查用户名失败")
 	}
 	if n > 0 {
-		return nil, gerror.New("用户名已存在")
+		return nil, code.ToError(code.UserExist)
 	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return nil, gerror.Wrap(err, "密码加密失败")
+		return nil, code.ToErrorWrap(err, code.FailedToRequest, "密码加密失败")
 	}
 	data := do.SysAdmin{
 		Username: req.Username,
@@ -110,7 +110,7 @@ func (s *sUser) CreateUser(ctx context.Context, req *v1.CreateUserReq) (*v1.Crea
 	}
 	id, err := dao.SysAdmin.Ctx(ctx).Data(data).InsertAndGetId()
 	if err != nil {
-		return nil, gerror.Wrap(err, "创建用户失败")
+		return nil, code.ToErrorWrap(err, code.FailedToRequest, "创建用户失败")
 	}
 	return &v1.CreateUserRes{Id: uint64(id)}, nil
 }
@@ -120,14 +120,14 @@ func (s *sUser) UpdateUser(ctx context.Context, req *v1.UpdateUserReq) (*v1.Upda
 	if req.Username != "" {
 		n, _ := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Username, req.Username).WhereNot(dao.SysAdmin.Columns().Id, req.Id).Count()
 		if n > 0 {
-			return nil, gerror.New("用户名已存在")
+			return nil, code.ToError(code.UserExist)
 		}
 		data[dao.SysAdmin.Columns().Username] = req.Username
 	}
 	if req.Password != "" {
 		hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
-			return nil, gerror.Wrap(err, "密码加密失败")
+			return nil, code.ToErrorWrap(err, code.FailedToRequest, "密码加密失败")
 		}
 		data[dao.SysAdmin.Columns().Password] = string(hashed)
 	}
@@ -145,7 +145,7 @@ func (s *sUser) UpdateUser(ctx context.Context, req *v1.UpdateUserReq) (*v1.Upda
 	}
 	_, err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Id, req.Id).Data(data).Update()
 	if err != nil {
-		return nil, gerror.Wrap(err, "更新用户失败")
+		return nil, code.ToErrorWrap(err, code.FailedToRequest, "更新用户失败")
 	}
 	return &v1.UpdateUserRes{}, nil
 }
@@ -153,7 +153,7 @@ func (s *sUser) UpdateUser(ctx context.Context, req *v1.UpdateUserReq) (*v1.Upda
 func (s *sUser) DeleteUser(ctx context.Context, req *v1.DeleteUserReq) (*v1.DeleteUserRes, error) {
 	_, err := dao.SysAdmin.Ctx(ctx).Where(dao.SysAdmin.Columns().Id, req.Id).Delete()
 	if err != nil {
-		return nil, gerror.Wrap(err, "删除用户失败")
+		return nil, code.ToErrorWrap(err, code.FailedToRequest, "删除用户失败")
 	}
 	return &v1.DeleteUserRes{}, nil
 }

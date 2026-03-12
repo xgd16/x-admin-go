@@ -33,7 +33,12 @@ alwaysApply: true
 
 ### 错误处理
 
-- 统一使用 `gerror`：`return nil, gerror.New("...")`
+统一使用 `internal/code` 包返回错误，便于前端按错误码处理：
+
+- **业务错误**（不需记录日志）：`code.ToError(code.Xxx)`，如 `UserExist`、`UserNotFound`、`NotLoggedIn`、`WrongOldPassword`、`InvalidToken`、`LoginFailMessage`
+- **包裹底层错误**（需记录日志）：`code.ToErrorWrap(err, code.FailedToQueryUserDataProcedure, "xxx")` 或 `code.ToErrorWrap(err, code.FailedToRequest, "xxx")`
+- 新增错误码：在 `internal/code/code.go` 中定义，无需日志用 `baseStartCode`，需日志用 `loggerStartCode`
+- 禁止直接使用 `gerror.New` 或 `gerror.Wrap`，统一走 `code.ToError` / `code.ToErrorWrap`
 
 ## 新增 API 流程
 
